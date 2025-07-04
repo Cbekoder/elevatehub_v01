@@ -1,0 +1,163 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ goal.title }}{% endblock %}
+
+{% block content %}
+<style>
+    body { background-color: #f7f8fc; }
+    .stat-card, .leaderboard-item, .streak-day { transition: all 0.3s ease; }
+    .stat-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px -5px rgba(0,0,0,0.1); }
+    .streak-day.active {
+        background-color: #16a34a;
+        color: white;
+        transform: scale(1.1);
+        box-shadow: 0 4px 15px -3px rgba(22, 163, 74, 0.3);
+    }
+    .subscriber-avatar:hover { transform: scale(1.15); z-index: 10; }
+    #chat-messages { scroll-behavior: smooth; }
+</style>
+
+<div class="max-w-7xl mx-auto py-12 px-4">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+        
+        <div class="lg:col-span-2 space-y-8">
+            <div class="bg-white p-8 rounded-2xl shadow-lg">
+                <a href="{% url 'category_detail' goal.category.slug %}" class="inline-flex items-center text-gray-500 hover:text-indigo-600 mb-6 text-sm font-medium">
+                    <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                    <span>{{ goal.category.name }}</span>
+                </a>
+
+                <div class="flex items-center mb-4">
+                    <img class="w-14 h-14 rounded-full mr-4 object-cover ring-2 ring-indigo-200 p-1" src="https://i.pravatar.cc/150?u={{ goal.created_by.username }}" alt="{{ goal.created_by.username }}">
+                    <div>
+                        <h1 class="text-3xl font-extrabold text-gray-900">{{ goal.title }}</h1>
+                        <p class="text-sm text-gray-500">Muallif: <span class="font-medium text-gray-700">{{ goal.created_by.first_name|default:goal.created_by.username }}</span></p>
+                    </div>
+                </div>
+                
+                <p class="text-gray-600 leading-relaxed my-6">{{ goal.description|linebreaks }}</p>
+
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-4 text-center border-t pt-6 mb-6">
+                    <div class="stat-card bg-indigo-50 p-4 rounded-xl">
+                        <svg class="w-8 h-8 mx-auto text-indigo-500 mb-1" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0h18"></path></svg>
+                        <div class="text-xl font-bold text-indigo-800">{{ goal.get_duration_display }}</div>
+                        <div class="text-xs text-indigo-600">Davomiyligi</div>
+                    </div>
+                    <div class="stat-card bg-blue-50 p-4 rounded-xl">
+                        <svg class="w-8 h-8 mx-auto text-blue-500 mb-1" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m-7.5-2.962a3.75 3.75 0 100-5.925 3.75 3.75 0 000 5.925zM12 21a9.094 9.094 0 01-3.741-.479 3 3 0 01-4.682-2.72M12 3a9.094 9.094 0 013.741.479 3 3 0 014.682 2.72m-7.5 2.962a3.75 3.75 0 100-5.925 3.75 3.75 0 000 5.925z"></path></svg>
+                        <div class="text-xl font-bold text-blue-800">{{ subscribers_count }}</div>
+                        <div class="text-xs text-blue-600">Obunachi</div>
+                    </div>
+                    <div class="stat-card bg-purple-50 p-4 rounded-xl">
+                        <svg class="w-8 h-8 mx-auto text-purple-500 mb-1" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639l4.25-6.5a1.012 1.012 0 011.628-.165l2.286 3.43a1.012 1.012 0 001.245 0l2.286-3.43a1.012 1.012 0 011.628.165l4.25 6.5a1.012 1.012 0 010 .639l-4.25 6.5a1.012 1.012 0 01-1.628.165l-2.286-3.43a1.012 1.012 0 00-1.245 0l-2.286-3.43a1.012 1.012 0 01-1.628-.165l-4.25-6.5z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                        <div class="text-xl font-bold text-purple-800">{{ goal.get_visibility_display }}</div>
+                        <div class="text-xs text-purple-600">Holati</div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons: Subscribe -->
+                <div class="mt-6 pt-6 border-t">
+                    <form action="{% url 'goal_subscribe' goal.id %}" method="post">
+                        {% csrf_token %}
+                        {% if user.is_authenticated %}
+                            {% if user in subscribers%}
+                                <button type="submit" class="w-full bg-gray-200 text-gray-800 font-bold py-3 rounded-lg hover:bg-gray-300 transition-colors">Obunani bekor qilish</button>
+                            {% else %}
+                                <button type="submit" class="w-full bg-blue-100 text-blue-800 font-bold py-3 rounded-lg hover:bg-blue-200 transition-colors">Maqsadga qo'shilish</button>
+                            {% endif %}
+                        {% else %}
+                            <a href="{% url 'login' %}?next={{ request.path }}" class="block w-full text-center bg-blue-100 text-blue-800 font-bold py-3 rounded-lg hover:bg-blue-200 transition-colors">Qo'shilish uchun kiring</a>
+                        {% endif %}
+                    </form>
+                </div>
+            </div>
+            
+            <div class="bg-white p-6 rounded-2xl shadow-lg">
+                <h2 class="text-xl font-bold text-gray-800 mb-4 text-center">Peshqadamlar Jadvali</h2>
+                <ul class="space-y-3">
+                    {% for streak in leaderboard %}<li class="leaderboard-item flex items-center p-2 rounded-lg {% if forloop.counter == 1 %}bg-amber-50{% elif forloop.counter == 2 %}bg-slate-100{% elif forloop.counter == 3 %}bg-orange-50{% endif %}"><div class="leaderboard-rank">{% if forloop.counter == 1 %}🥇{% elif forloop.counter == 2 %}🥈{% elif forloop.counter == 3 %}🥉{% else %}{{ forloop.counter }}.{% endif %}</div><img class="w-10 h-10 rounded-full mr-3 object-cover" src="https://i.pravatar.cc/150?u={{ streak.user.username }}" alt="{{ streak.user.username }}"><span class="text-gray-700 font-medium flex-grow">{{ streak.user.first_name|default:streak.user.username }}</span><span class="font-bold text-indigo-600 flex items-center">{{ streak.streak_count }}<svg class="w-5 h-5 ml-1 text-orange-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M12.254 2.234a.75.75 0 00-1.06-.04l-3 3.25a.75.75 0 00.51 1.296h.586a2.5 2.5 0 012.5 2.5v.586a.75.75 0 001.296.51l3.25-3a.75.75 0 00-.04-1.06l-2.234-2.254zm-7.44 10.292a.75.75 0 00-1.06.04l-3 3.25a.75.75 0 00.51 1.296h.586a2.5 2.5 0 012.5 2.5v.586a.75.75 0 001.296.51l3.25-3a.75.75 0 00-.04-1.06l-2.234-2.254z" clip-rule="evenodd"></path></svg></span></li>{% empty %}<p class="text-center text-gray-500 text-sm py-4">Hali peshqadamlar yo'q. Birinchi bo'ling!</p>{% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        <div class="lg:col-span-1 space-y-8 sticky top-24">
+            <div class="bg-white p-6 rounded-2xl shadow-lg">
+                <h2 class="text-xl font-bold text-gray-800 mb-4 text-center">Sizning Seriyangiz</h2>
+                <div class="grid grid-cols-7 gap-2 text-center mb-6">
+                    {% for day in week_days %}<div class="streak-day p-2 rounded-full {% if day.is_active %}active{% endif %}"><div class="text-xs font-bold">{{ day.name }}</div><div class="text-lg font-bold">{{ day.date }}</div></div>{% empty %}<p class="col-span-7 text-center text-sm text-gray-500 py-4">Belgilanishni boshlang!</p>{% endfor %}
+                </div>
+                <form action="{% url 'goal_checkin' goal.id %}" method="post">
+                    {% csrf_token %}
+                    {% if user.is_authenticated %}
+                        {% if has_checked_in_today %}<button disabled class="w-full bg-green-500 text-white font-bold py-3 rounded-lg flex items-center justify-center cursor-not-allowed shadow-lg shadow-green-500/30"><svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>Bugun belgilandingiz!</button>
+                        {% else %}<button type="submit" class="w-full bg-indigo-600 text-white font-bold py-3 rounded-lg hover:bg-indigo-700 transition-transform hover:scale-105 shadow-lg shadow-indigo-500/40">Bugun uchun belgilanish</button>{% endif %}
+                    {% else %}
+                        <a href="{% url 'login' %}?next={{ request.path }}" class="w-full block text-center bg-gray-500 text-white font-bold py-3 rounded-lg">Belgilanish uchun kiring</a>
+                    {% endif %}
+                </form>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-lg h-[calc(100vh-32rem)] flex flex-col">
+                <h3 class="font-bold text-lg p-4 border-b text-gray-800 flex-shrink-0">Guruh Chati</h3>
+                <div id="chat-messages" class="flex-grow p-4 space-y-4 overflow-y-auto">
+                    {% if is_subscribed_to_chat %}{% for msg in chat_messages %}<div class="flex items-end gap-2 {% if msg.user == user %}flex-row-reverse{% endif %}"><img class="w-8 h-8 rounded-full object-cover" src="https://i.pravatar.cc/150?u={{ msg.user.username }}" alt="{{ msg.user.username }}"><div class="p-3 rounded-xl max-w-xs {% if msg.user == user %}bg-indigo-500 text-white{% else %}bg-gray-200 text-gray-800{% endif %}"><p class="text-sm">{{ msg.message }}</p></div></div>{% endfor %}
+                    {% else %}
+                    <div class="flex flex-col items-center justify-center h-full text-center text-gray-500 p-4">
+                        <svg class="w-16 h-16 text-gray-300 mb-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.455.09-.934.09-1.425v-2.287a6.75 6.75 0 016.75-6.75h.618c.424 0 .824.036 1.202.102a6.753 6.753 0 013.296 1.202z" /></svg>
+                        <h4 class="font-semibold text-gray-700">Chatga kirish cheklangan</h4>
+                        <p class="mt-1 text-sm">Ushbu maqsad chatida ishtirok etish uchun, iltimos, "Qo'shilish" tugmasini bosing.</p>
+                    </div>
+                    {% endif %}
+                </div>
+                {% if is_subscribed_to_chat %}<div class="p-4 border-t flex-shrink-0"><form id="message-form" class="flex items-center gap-2">{% csrf_token %}{{ message_form.message }}<button type="submit" class="bg-indigo-600 text-white rounded-full p-2 hover:bg-indigo-700 transition-colors flex-shrink-0"><svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5"></path></svg></button></form></div>{% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if is_subscribed_to_chat %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const chatBox = document.getElementById('chat-messages');
+    const messageForm = document.getElementById('message-form');
+    const messageInput = document.querySelector('[name="message"]');
+    let lastTimestamp = "{% now 'c' %}";
+
+    function scrollToBottom() { chatBox.scrollTop = chatBox.scrollHeight; }
+
+    function renderMessage(msg) {
+        const div = document.createElement('div');
+        div.className = `flex items-end gap-2 ${msg.is_self ? 'flex-row-reverse' : ''}`;
+        div.innerHTML = `<img class="w-8 h-8 rounded-full object-cover" src="${msg.avatar_url}"><div class="p-3 rounded-xl max-w-xs ${msg.is_self ? 'bg-indigo-500 text-white' : 'bg-gray-200 text-gray-800'}"><p class="text-sm">${msg.message}</p></div>`;
+        chatBox.appendChild(div);
+        lastTimestamp = msg.timestamp;
+    }
+
+    messageForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const messageText = messageInput.value.trim();
+        if (messageText === '') return;
+        fetch("{% url 'post_message' goal.id %}", {
+            method: 'POST',
+            headers: {'X-CSRFToken': '{{ csrf_token }}', 'Content-Type': 'application/x-www-form-urlencoded'},
+            body: `message=${encodeURIComponent(messageText)}`
+        }).then(res => res.json()).then(data => {
+            if (data.status === 'ok') { messageInput.value = ''; fetchNewMessages(true); } 
+        });
+    });
+
+    function fetchNewMessages(isAfterSend = false) {
+        fetch(`{% url 'fetch_messages' goal.id %}?last_timestamp=${encodeURIComponent(lastTimestamp)}`)
+            .then(res => res.json()).then(data => {
+                if (data.length > 0) { data.forEach(renderMessage); scrollToBottom(); }
+                else if (isAfterSend) { scrollToBottom(); }
+            });
+    }
+
+    scrollToBottom();
+    setInterval(fetchNewMessages, 3000);
+});
+</script>
+{% endif %}
+{% endblock %}

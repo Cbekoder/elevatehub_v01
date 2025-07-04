@@ -3,7 +3,7 @@ from django import forms
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import AuthenticationForm
 
-from users.models import Goal, SubCategory
+from users.models import Goal, GoalMessage, SubCategory
 # Get the active User model
 User = get_user_model()
 
@@ -115,3 +115,18 @@ class GoalForm(forms.ModelForm):
                 pass
         elif self.instance.pk and self.instance.category:
             self.fields['sub_category'].queryset = self.instance.category.subcategories.order_by('name')
+
+class MessageForm(forms.ModelForm):
+    """
+    A simple form for submitting a chat message.
+    """
+    class Meta:
+        model = GoalMessage
+        fields = ['message']
+        widgets = {
+            'message': forms.TextInput(attrs={
+                'placeholder': 'Xabar yozing...',
+                'autocomplete': 'off', # Prevents browser from suggesting old messages
+                'class': 'flex-grow' # Tailwind class for layout
+            })
+        }

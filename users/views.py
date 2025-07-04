@@ -1,66 +1,60 @@
 # core/views.py
-from django.http import JsonResponse
+from django.http import HttpResponseForbidden, JsonResponse
 from django.shortcuts import get_object_or_404, render, redirect
 from django.views.generic import CreateView, UpdateView, DeleteView
 from django.views.generic import ListView, DetailView, View
 from django.contrib.auth import login, get_user_model
 from django.urls import reverse_lazy
 from django.contrib import messages
-from .models import GoalCategory, Goal, SubCategory
-from .forms import RegistrationForm
+from .models import GoalCategory, Goal, GoalMessage, SubCategory
+from .forms import MessageForm, RegistrationForm
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from .forms import GoalForm
+from django.utils import timezone
+from datetime import timedelta
+from django.db.models import Count, Q
+from .models import Goal, GoalStreak
 User = get_user_model()
 
 
 class HomeView(ListView):
     """
     Displays the main home page (index.html).
-    It retrieves all GoalCategory objects to display the category grid.
+    The content is now tailored for authenticated vs. unauthenticated users.
     """
     model = GoalCategory
     template_name = 'index.html'
     context_object_name = 'categories'
 
-
-class CategoryDetailView(LoginRequiredMixin, DetailView):
-    """
-    Displays the detail page for a single category.
-    
-    This view is protected by LoginRequiredMixin, meaning only logged-in users
-    can access it. It shows only the goals created by the current user within
-    the selected category.
-    """
-    model = GoalCategory
-    template_name = 'category_detail.html'
-    context_object_name = 'category' # The object will be available as 'category' in the template
-
     def get_context_data(self, **kwargs):
-        """
-        Adds extra context to the template:
-        - A list of goals filtered by the current user and category.
-        - An instance of the GoalForm for quick goal creation.
-        """
-        # Call the base implementation first to get the context
         context = super().get_context_data(**kwargs)
-        
-        # Get the category object that this view is displaying
-        category_object = self.get_object()
-        
-        # Filter goals to show only those created by the current logged-in user
-        # for the current category.
-        user_goals = Goal.objects.filter(
-            category=category_object, 
-            created_by=self.request.user
+
+        # --- Public Data (for all users) ---
+        # Add goal count to each category
+        categories_with_count = GoalCategory.objects.annotate(
+            goal_count=Count('goals', filter=Q(goals__visibility='public'))
         )
+        context['categories'] = categories_with_count
+
+        context['top_goals'] = Goal.objects.filter(visibility='public').annotate(
+            num_subscribers=Count('subscribers')
+        ).order_by('-num_subscribers')[:10]
+
+        all_streaks = GoalStreak.objects.order_by('user', '-streak_count')
+        top_streaks_map = {}
+        for streak in all_streaks:
+            if streak.user_id not in top_streaks_map:
+                top_streaks_map[streak.user_id] = streak
         
-        # Add the filtered goals to the context
-        context['goals'] = user_goals
+        context['top_streakers'] = sorted(top_streaks_map.values(), key=lambda x: x.streak_count, reverse=True)[:10]
         
-        # Add a pre-filled GoalForm to the context for the "quick add" feature.
-        # The 'category' field is pre-selected.
-        context['goal_form'] = GoalForm(initial={'category': category_object})
-        
+        # --- Personalized Data (for authenticated users only) ---
+        if self.request.user.is_authenticated:
+            user = self.request.user
+            my_goals = Goal.objects.filter(created_by=user)
+            subscribed_goals = user.subscribed_goals.all()
+            context['my_personal_goals'] = (my_goals | subscribed_goals).distinct().order_by('-created_at')[:5]
+
         return context
 
 class RegisterView(View):
@@ -221,3 +215,149 @@ class SubscribeToGoalView(LoginRequiredMixin, View):
             
         return redirect(request.META.get('HTTP_REFERER', reverse_lazy('home')))
 
+
+class CategoryDetailView(ListView):
+    """
+    Displays a list of public goals within a specific category.
+    Now includes filtering by duration (day, week, month).
+    """
+    model = Goal
+    template_name = 'category_detail.html'
+    context_object_name = 'goals'
+    paginate_by = 9
+
+    def get_queryset(self):
+        """
+        Filters goals to show only public ones in the selected category
+        and applies time-based filtering.
+        """
+        self.category = get_object_or_404(GoalCategory, slug=self.kwargs['slug'])
+        queryset = Goal.objects.filter(category=self.category, visibility='public')
+        
+        filter_by = self.request.GET.get('filter')
+        if filter_by == 'day':
+            queryset = queryset.filter(duration__lte=7) 
+        elif filter_by == 'week':
+            queryset = queryset.filter(duration__lte=14)
+        elif filter_by == 'month':
+            queryset = queryset.filter(duration__lte=28)
+            
+        return queryset.order_by('-created_at')
+
+    def get_context_data(self, **kwargs):
+        """
+        Adds the category object to the context.
+        """
+        context = super().get_context_data(**kwargs)
+        context['category'] = self.category
+        return context
+
+
+
+
+class GoalDetailView(DetailView):
+    """
+    Handles the display of a single goal with all its related data:
+    subscribers, streaks, leaderboard, and chat.
+    """
+    model = Goal
+    template_name = 'goal_detail.html' # The new, final template
+    context_object_name = 'goal'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        goal = self.get_object()
+        user = self.request.user
+
+        # --- Basic Goal Data ---
+        context['subscribers'] = goal.subscribers.all()
+        context['subscribers_count'] = goal.subscribers.count()
+
+        # --- Leaderboard Logic (Database Agnostic) ---
+        all_streaks = GoalStreak.objects.filter(goal=goal).order_by('user', '-date')
+        latest_streaks_map = {}
+        for streak in all_streaks:
+            if streak.user_id not in latest_streaks_map:
+                latest_streaks_map[streak.user_id] = streak
+        
+        leaderboard = sorted(latest_streaks_map.values(), key=lambda x: x.streak_count, reverse=True)[:10]
+        context['leaderboard'] = leaderboard
+
+        # --- Streak, Check-in, and Chat Logic (for authenticated users) ---
+        if user.is_authenticated:
+            today = timezone.now().date()
+            context['has_checked_in_today'] = GoalStreak.objects.filter(goal=goal, user=user, date=today).exists()
+            
+            # Weekly streak calendar data
+            week_days_data = []
+            user_streaks_this_week = GoalStreak.objects.filter(
+                goal=goal, user=user, date__gte=today - timedelta(days=6)
+            ).values_list('date', flat=True)
+
+            for i in range(6, -1, -1): # Iterate from 6 days ago to today
+                day = today - timedelta(days=i)
+                week_days_data.append({
+                    'name': day.strftime("%a")[0],
+                    'date': day.day,
+                    'is_active': day in user_streaks_this_week
+                })
+            context['week_days'] = week_days_data
+
+            # Chat system data
+            is_subscribed = user in context['subscribers'] or user == goal.created_by
+            context['is_subscribed_to_chat'] = is_subscribed
+            if is_subscribed:
+                context['chat_messages'] = goal.chat_messages.all().select_related('user')
+                context['message_form'] = MessageForm()
+        
+        return context
+
+# --- Supporting AJAX/Action Views ---
+
+class CheckInView(LoginRequiredMixin, View):
+    def post(self, request, *args, **kwargs):
+        goal = get_object_or_404(Goal, id=self.kwargs.get('goal_id'))
+        today = timezone.now().date()
+        if GoalStreak.objects.filter(goal=goal, user=request.user, date=today).exists():
+            messages.warning(request, "Siz bugun uchun allaqachon belgilandingiz!")
+            return redirect(goal.get_absolute_url())
+        
+        yesterday = today - timedelta(days=1)
+        yesterdays_streak = GoalStreak.objects.filter(goal=goal, user=request.user, date=yesterday).first()
+        new_streak_count = yesterdays_streak.streak_count + 1 if yesterdays_streak else 1
+        
+        GoalStreak.objects.create(goal=goal, user=request.user, date=today, streak_count=new_streak_count)
+        messages.success(request, f"Tabriklaymiz! Sizning seriyangiz: {new_streak_count} kun.")
+        return redirect(goal.get_absolute_url())
+
+class PostMessageView(LoginRequiredMixin, View):
+    def post(self, request, *args, **kwargs):
+        goal = get_object_or_404(Goal, id=self.kwargs.get('goal_id'))
+        if not (request.user in goal.subscribers.all() or request.user == goal.created_by):
+            return HttpResponseForbidden()
+        form = MessageForm(request.POST)
+        if form.is_valid():
+            message = form.save(commit=False)
+            message.goal = goal
+            message.user = request.user
+            message.save()
+            return JsonResponse({'status': 'ok'})
+        return JsonResponse({'status': 'error', 'errors': form.errors}, status=400)
+
+class FetchMessagesView(LoginRequiredMixin, View):
+    def get(self, request, *args, **kwargs):
+        goal = get_object_or_404(Goal, id=self.kwargs.get('goal_id'))
+        if not (request.user in goal.subscribers.all() or request.user == goal.created_by):
+            return HttpResponseForbidden()
+        
+        last_ts = request.GET.get('last_timestamp')
+        messages_qs = GoalMessage.objects.filter(goal=goal, timestamp__gt=last_ts) if last_ts else GoalMessage.objects.filter(goal=goal)
+        
+        data = [{
+            'user': msg.user.first_name or msg.user.username,
+            'avatar_url': f'https://i.pravatar.cc/150?u={msg.user.username}',
+            'message': msg.message,
+            'timestamp': msg.timestamp.isoformat(),
+            'is_self': msg.user == request.user
+        } for msg in messages_qs.select_related('user')]
+        return JsonResponse(data, safe=False)

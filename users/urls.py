@@ -23,9 +23,14 @@ urlpatterns = [
         views.CategoryDetailView.as_view(),
         name="category_detail",
     ),
+    # New URL for the Goal Detail page
+    path("goal/<int:pk>/", views.GoalDetailView.as_view(), name="goal_detail"),
     path("goal/new/", views.GoalCreateView.as_view(), name="goal_create"),
     path("goal/<int:pk>/edit/", views.GoalUpdateView.as_view(), name="goal_update"),
     path("goal/<int:pk>/delete/", views.GoalDeleteView.as_view(), name="goal_delete"),
+    path(
+        "goal/<int:goal_id>/checkin/", views.CheckInView.as_view(), name="goal_checkin"
+    ),
     # Logout View
     path(
         "logout/",
@@ -44,5 +49,15 @@ urlpatterns = [
         "ajax/load-subcategories/",
         views.load_subcategories,
         name="ajax_load_subcategories",
+    ),
+    path(
+        "goal/<int:goal_id>/post_message/",
+        views.PostMessageView.as_view(),
+        name="post_message",
+    ),
+    path(
+        "goal/<int:goal_id>/fetch_messages/",
+        views.FetchMessagesView.as_view(),
+        name="fetch_messages",
     ),
 ]

@@ -60,4 +60,7 @@ urlpatterns = [
         views.FetchMessagesView.as_view(),
         name="fetch_messages",
     ),
+
+     path('goal/<int:goal_pk>/subtask/new/', views.SubTaskCreateView.as_view(), name='subtask_create'),
+    path('subtask/<int:subtask_pk>/toggle/', views.SubTaskToggleView.as_view(), name='subtask_toggle'),
 ]

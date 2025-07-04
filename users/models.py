@@ -101,6 +101,31 @@ class Goal(models.Model):
     subscribers = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='subscribed_goals', blank=True)
     def get_absolute_url(self): return reverse('goal_detail', kwargs={'pk': self.pk})
     def __str__(self): return self.title
+    @property
+    def progress_percentage(self):
+        """
+        Maqsadning bajarilish foizini hisoblaydi.
+        """
+        subtasks = self.subtasks.all()
+        if not subtasks.exists():
+            return 0
+        completed_count = subtasks.filter(is_completed=True).count()
+        return int((completed_count / subtasks.count()) * 100)
+
+class SubTask(models.Model):
+    """
+    Katta maqsad uchun kichik vazifani ifodalaydi.
+    """
+    goal = models.ForeignKey(Goal, on_delete=models.CASCADE, related_name='subtasks')
+    title = models.CharField(max_length=255, verbose_name="Vazifa nomi")
+    is_completed = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['created_at']
+
+    def __str__(self):
+        return self.title
 
 class GoalStreak(models.Model):
     """

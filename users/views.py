@@ -6,8 +6,8 @@ from django.views.generic import ListView, DetailView, View
 from django.contrib.auth import login, get_user_model
 from django.urls import reverse_lazy
 from django.contrib import messages
-from .models import GoalCategory, Goal, GoalMessage, SubCategory
-from .forms import MessageForm, RegistrationForm
+from .models import GoalCategory, Goal, GoalMessage, SubCategory, SubTask
+from .forms import MessageForm, RegistrationForm, SubTaskForm
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from .forms import GoalForm
 from django.utils import timezone
@@ -218,43 +218,102 @@ class SubscribeToGoalView(LoginRequiredMixin, View):
 
 class CategoryDetailView(ListView):
     """
-    Displays a list of public goals within a specific category.
-    Now includes filtering by duration (day, week, month).
+    Displays a list of goals within a specific category.
+    Includes a filtering system for public and private goals.
     """
     model = Goal
-    template_name = 'category_detail.html'
+    template_name = 'category_detail.html' # New template
     context_object_name = 'goals'
-    paginate_by = 9
+    paginate_by = 12
 
     def get_queryset(self):
         """
-        Filters goals to show only public ones in the selected category
-        and applies time-based filtering.
+        Filters the goals based on the category and the 'visibility'
+        query parameter ('public', 'private', 'all').
         """
         self.category = get_object_or_404(GoalCategory, slug=self.kwargs['slug'])
-        queryset = Goal.objects.filter(category=self.category, visibility='public')
-        
-        filter_by = self.request.GET.get('filter')
-        if filter_by == 'day':
-            queryset = queryset.filter(duration__lte=7) 
-        elif filter_by == 'week':
-            queryset = queryset.filter(duration__lte=14)
-        elif filter_by == 'month':
-            queryset = queryset.filter(duration__lte=28)
+        user = self.request.user
+        visibility_filter = self.request.GET.get('visibility', 'public') # Default to public
+
+        # Start with the base queryset for the current category
+        queryset = Goal.objects.filter(category=self.category)
+
+        if visibility_filter == 'private':
+            if user.is_authenticated:
+                # Show only the current user's private goals
+                queryset = queryset.filter(created_by=user, visibility='private')
+            else:
+                # Unauthenticated users can't have private goals
+                queryset = queryset.none()
+        elif visibility_filter == 'my_goals':
+            if user.is_authenticated:
+                # Show all goals created by the current user (public and private)
+                queryset = queryset.filter(created_by=user)
+            else:
+                queryset = queryset.none()
+        else: # Default to 'public'
+            queryset = queryset.filter(visibility='public')
             
         return queryset.order_by('-created_at')
 
     def get_context_data(self, **kwargs):
         """
-        Adds the category object to the context.
+        Adds the category object and the current filter to the context.
         """
         context = super().get_context_data(**kwargs)
         context['category'] = self.category
+        context['active_filter'] = self.request.GET.get('visibility', 'public')
         return context
 
+class SubTaskCreateView(LoginRequiredMixin, View):
+    """
+    AJAX orqali yangi kichik vazifa yaratishni boshqaradi.
+    Endi maqsad muallifi YOKI obunachilari vazifa qo'shishi mumkin.
+    """
+    def post(self, request, *args, **kwargs):
+        goal = get_object_or_404(Goal, pk=self.kwargs.get('goal_pk'))
+        
+        # YANGILANGAN TEKSHIRUV: Foydalanuvchi muallif yoki obunachimi?
+        if not (request.user == goal.created_by or request.user in goal.subscribers.all()):
+            return JsonResponse({'error': 'Faqat obunachilar vazifa qo‘sha oladi.'}, status=403)
+        
+        form = SubTaskForm(request.POST)
+        if form.is_valid():
+            subtask = form.save(commit=False)
+            subtask.goal = goal
+            subtask.save()
+            return JsonResponse({
+                'status': 'ok',
+                'subtask': {
+                    'id': subtask.id,
+                    'title': subtask.title,
+                    'is_completed': subtask.is_completed
+                },
+                'progress': goal.progress_percentage
+            })
+        return JsonResponse({'status': 'error', 'errors': form.errors}, status=400)
 
+class SubTaskToggleView(LoginRequiredMixin, View):
+    """
+    AJAX orqali kichik vazifaning 'bajarildi' holatini o'zgartiradi.
+    Endi maqsad muallifi YOKI obunachilari holatni o'zgartirishi mumkin.
+    """
+    def post(self, request, *args, **kwargs):
+        subtask = get_object_or_404(SubTask, pk=self.kwargs.get('subtask_pk'))
+        goal = subtask.goal
 
-
+        # YANGILANGAN TEKSHIRUV: Foydalanuvchi muallif yoki obunachimi?
+        if not (request.user == goal.created_by or request.user in goal.subscribers.all()):
+            return JsonResponse({'error': 'Faqat obunachilar vazifani belgilay oladi.'}, status=403)
+            
+        subtask.is_completed = not subtask.is_completed
+        subtask.save()
+        
+        return JsonResponse({
+            'status': 'ok',
+            'is_completed': subtask.is_completed,
+            'progress': goal.progress_percentage
+        })
 class GoalDetailView(DetailView):
     """
     Handles the display of a single goal with all its related data:
@@ -269,6 +328,9 @@ class GoalDetailView(DetailView):
         goal = self.get_object()
         user = self.request.user
 
+        if self.request.user.is_authenticated:
+            context['subtasks'] = goal.subtasks.all()
+            context['subtask_form'] = SubTaskForm()
         # --- Basic Goal Data ---
         context['subscribers'] = goal.subscribers.all()
         context['subscribers_count'] = goal.subscribers.count()

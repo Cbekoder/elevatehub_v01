@@ -3,7 +3,7 @@ from django import forms
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import AuthenticationForm
 
-from users.models import Goal, GoalMessage, SubCategory
+from users.models import Goal, GoalMessage, SubCategory, SubTask
 # Get the active User model
 User = get_user_model()
 
@@ -75,6 +75,21 @@ class RegistrationForm(forms.Form):
         if password and password2 and password != password2:
             self.add_error('password2', "Parollar bir-biriga mos kelmadi.")
         return cleaned_data
+
+class SubTaskForm(forms.ModelForm):
+    """
+    Yangi kichik vazifa yaratish uchun forma.
+    """
+    class Meta:
+        model = SubTask
+        fields = ['title']
+        widgets = {
+            'title': forms.TextInput(attrs={
+                'placeholder': 'Yangi vazifa qo‘shish...',
+                'class': 'flex-grow',
+                'autocomplete': 'off'
+            })
+        }
 
 class GoalForm(forms.ModelForm):
     """

@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="uz" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Maqsaddosh!{% endblock %}</title>
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        /* Apply the Inter font to the body */
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        /* Simple transition for dropdowns */
+        .dropdown-menu {
+            display: none;
+            opacity: 0;
+            transition: opacity 0.2s ease-out, transform 0.2s ease-out;
+            transform: translateY(10px);
+        }
+        .dropdown-menu.active {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body class="bg-white">
+
+    <!-- Header -->
+    <header class="bg-white/95 backdrop-blur-sm sticky top-0 z-40">
+        <div class="container mx-auto px-4">
+            <div class="flex justify-between items-center py-4 border-b border-gray-200">
+                <!-- Logo and Nav Links -->
+                <div class="flex items-center space-x-8">
+                    <a href="{% url 'home' %}" class="flex items-center text-xl font-bold text-gray-800">
+                        <!-- Asterisk Logo SVG -->
+                        <svg class="w-7 h-7 mr-2 text-black" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M10 1.5a.75.75 0 01.692.461l1.734 3.51a.75.75 0 00.565.41l3.868.562a.75.75 0 01.416 1.28l-2.8 2.73a.75.75 0 00-.216.664l.662 3.853a.75.75 0 01-1.088.79l-3.46-1.819a.75.75 0 00-.698 0l-3.46 1.819a.75.75 0 01-1.088-.79l.662-3.853a.75.75 0 00-.216-.664l-2.8-2.73a.75.75 0 01.416-1.28l3.868-.562a.75.75 0 00.565-.41L9.308 1.96A.75.75 0 0110 1.5z" />
+                        </svg>
+                    </a>
+                    <!-- Primary Nav -->
+                    <div class="hidden md:flex items-center space-x-6">
+                        <a href="{% url 'home' %}" class="text-gray-900 font-medium hover:text-blue-600 transition-colors">Bosh sahifa</a>
+                        <a href="#" class="text-gray-500 hover:text-blue-600 transition-colors">Maqsaddosh</a>
+                        <a href="#" class="text-gray-500 hover:text-blue-600 transition-colors">Biz haqimizda</a>
+                        <a href="#" class="text-gray-500 hover:text-blue-600 transition-colors">Yordam</a>
+                    </div>
+                </div>
+
+                <!-- Right side buttons -->
+                <div class="flex items-center space-x-3">
+                    {% if user.is_authenticated %}
+                        <a href="#" class="hidden sm:inline-block bg-gray-100 text-gray-800 font-medium px-4 py-2 rounded-lg hover:bg-gray-200 text-sm transition-colors">+ Maqsad qo‘shish</a>
+                        <!-- Profile Dropdown -->
+                        <div class="relative">
+                            <button id="profileDropdownBtn" class="flex items-center space-x-2 focus:outline-none">
+                                <span class="w-9 h-9 bg-gray-200 rounded-full flex items-center justify-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-gray-600">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+                                    </svg>
+                                </span>
+                            </button>
+                            <div id="profileDropdownMenu" class="dropdown-menu origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 py-1 z-20">
+                                <div class="px-4 py-3 text-sm text-gray-700 border-b">
+                                    <p class="font-medium truncate">{{ user.username }}</p>
+                                </div>
+                                <a href="{% url 'logout' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Chiqish</a>
+                            </div>
+                        </div>
+                    {% else %}
+                        <a href="#" class="hidden sm:inline-block bg-gray-100 text-gray-800 font-medium px-4 py-2 rounded-lg hover:bg-gray-200 text-sm transition-colors">+ Maqsad qo‘shish</a>
+                        <a href="{% url 'login' %}" class="bg-blue-600 text-white font-medium px-5 py-2 rounded-lg hover:bg-blue-700 text-sm transition-colors">Kirish</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto mt-4 px-4">
+        <!-- Django Messages -->
+        {% if messages %}
+            <div class="my-4 space-y-2">
+                {% for message in messages %}
+                    <div class="p-3 rounded-md text-sm font-medium {% if message.tags == 'success' %}bg-green-100 text-green-800{% elif message.tags == 'error' %}bg-red-100 text-red-800{% else %}bg-blue-100 text-blue-800{% endif %}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+        
+        {% block content %}
+        <!-- Child template content will be rendered here -->
+        {% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="mt-16 py-8 bg-white border-t border-gray-200">
+        <div class="container mx-auto text-center text-gray-500 text-sm">
+            <p>&copy; {% now "Y" %} Maqsaddosh. Barcha huquqlar himoyalangan.</p>
+        </div>
+    </footer>
+
+    <!-- JavaScript for Dropdowns -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Profile Dropdown
+            const profileDropdownBtn = document.getElementById('profileDropdownBtn');
+            const profileDropdownMenu = document.getElementById('profileDropdownMenu');
+            if (profileDropdownBtn && profileDropdownMenu) {
+                profileDropdownBtn.addEventListener('click', (event) => {
+                    event.stopPropagation();
+                    profileDropdownMenu.classList.toggle('active');
+                });
+            }
+
+            // "Barchasi" Dropdown
+            const optionsMenuBtn = document.getElementById('options-menu');
+            const optionsMenu = document.getElementById('options-menu-dropdown');
+            if (optionsMenuBtn && optionsMenu) {
+                optionsMenuBtn.addEventListener('click', (event) => {
+                    event.stopPropagation();
+                    optionsMenu.classList.toggle('active');
+                });
+            }
+            
+            // Close dropdowns if clicking outside
+            document.addEventListener('click', (event) => {
+                if (profileDropdownMenu && !profileDropdownMenu.contains(event.target) && !profileDropdownBtn.contains(event.target)) {
+                    profileDropdownMenu.classList.remove('active');
+                }
+                if (optionsMenu && !optionsMenu.contains(event.target) && !optionsMenuBtn.contains(event.target)) {
+                    optionsMenu.classList.remove('active');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

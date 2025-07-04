@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+
+{% block title %}Maqsad Qo'shish{% endblock %}
+
+{% block content %}
+<style>
+    body { background-color: #f8fafc; }
+    .form-field {
+        background-color: #f1f5f9; /* slate-100 */
+        border: 1px solid #f1f5f9;
+        transition: all 0.2s ease-in-out;
+    }
+    .form-field:focus {
+        background-color: white;
+        border-color: #4f46e5; /* indigo-600 */
+        box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+    }
+    /* Custom radio button styles for duration */
+    .duration-label {
+        border: 1px solid #e2e8f0;
+        transition: all 0.2s ease-in-out;
+    }
+    input[type="radio"]:checked + .duration-label {
+        background-color: #4f46e5;
+        border-color: #4f46e5;
+        color: white;
+        font-weight: 600;
+    }
+</style>
+
+<div class="max-w-lg mx-auto py-12">
+    <div class="bg-white p-8 sm:p-10 rounded-2xl shadow-xl">
+        <h1 class="text-3xl font-bold text-gray-800 mb-8 text-center">Maqsad qo'shish</h1>
+        <form id="goalForm" method="post" class="space-y-6" novalidate>
+            {% csrf_token %}
+
+            {# --- The 'add_class' filter has been removed from these lines --- #}
+            <div>{{ form.title }}</div>
+            <div>{{ form.description }}</div>
+            <div>{{ form.category }}</div>
+            <div>{{ form.sub_category }}</div>
+
+            <div id="duration-container" class="grid grid-cols-4 gap-3">
+                {% for radio in form.duration %}
+                <div class="relative">
+                    {{ radio.tag }}
+                    <label for="{{ radio.id_for_label }}" class="duration-label cursor-pointer text-center block w-full p-3 rounded-xl text-sm text-gray-600">
+                        {{ radio.choice_label }}
+                    </label>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div>{{ form.visibility }}</div>
+            <div>{{ form.phone_number }}</div>
+            <div>{{ form.telegram_username }}</div>
+
+            <button type="submit" class="w-full bg-blue-600 text-white font-bold py-4 rounded-xl hover:bg-blue-700 transition-colors text-lg">
+                SAQLASH
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    // --- This script applies the CSS classes, replacing the need for 'add_class' ---
+    const fieldsToStyle = [
+        '#{{ form.title.id_for_label }}',
+        '#{{ form.description.id_for_label }}',
+        '#{{ form.category.id_for_label }}',
+        '#{{ form.sub_category.id_for_label }}',
+        '#{{ form.visibility.id_for_label }}',
+        '#{{ form.phone_number.id_for_label }}',
+        '#{{ form.telegram_username.id_for_label }}',
+    ];
+
+    fieldsToStyle.forEach(selector => {
+        const element = document.querySelector(selector);
+        if (element) {
+            element.classList.add('form-field', 'w-full', 'p-4', 'rounded-xl');
+            if (element.tagName === 'SELECT') {
+                element.classList.add('appearance-none');
+            }
+        }
+    });
+
+    const categorySelect = document.getElementById("{{ form.category.id_for_label }}");
+    const subCategorySelect = document.getElementById("{{ form.sub_category.id_for_label }}");
+    const url = "{% url 'ajax_load_subcategories' %}";
+
+    categorySelect.addEventListener("change", function() {
+        const categoryId = this.value;
+        if (categoryId) {
+            fetch(`${url}?category_id=${categoryId}`)
+                .then(response => response.json())
+                .then(data => {
+                    subCategorySelect.innerHTML = '<option value="">Ichki yo\'nalish</option>';
+                    data.forEach(sub => {
+                        const option = document.createElement("option");
+                        option.value = sub.id;
+                        option.textContent = sub.name;
+                        subCategorySelect.appendChild(option);
+                    });
+                });
+        } else {
+            subCategorySelect.innerHTML = '<option value="">Ichki yo\'nalish</option>';
+        }
+    });
+});
+</script>
+{% endblock %}

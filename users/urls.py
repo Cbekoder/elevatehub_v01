@@ -35,9 +35,7 @@ urlpatterns = [
     # Logout View
     path(
         "logout/",
-        LogoutView.as_view(
-            template_name="registration/logout.html"  # Path to the logout confirmation page
-        ),
+        LogoutView.as_view(next_page='login'),
         name="logout",
     ),
     path(

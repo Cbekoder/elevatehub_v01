@@ -111,33 +111,12 @@
     {% endblock %}
 </main>
 
-<footer class="mt-24 bg-gray-900 text-white">
-    <div class="container mx-auto px-6 py-12">
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div class="col-span-1 md:col-span-2">
-                <h3 class="text-2xl font-bold mb-2">ElevateHub</h3>
-                <p class="text-gray-400 max-w-md">Turn your ambitions into achievements. Set your goals, track your progress, and elevate your life.</p>
-            </div>
-            <div>
-                <h4 class="font-semibold text-lg mb-4">Quick Links</h4>
-                <ul class="space-y-2">
-                    <li><a href="#" class="text-gray-400 hover:text-white transition-colors">About Us</a></li>
-                    <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Contact</a></li>
-                    <li><a href="#" class="text-gray-400 hover:text-white transition-colors">FAQ</a></li>
-                </ul>
-            </div>
-            <div>
-                <h4 class="font-semibold text-lg mb-4">Follow Us</h4>
-                <div class="flex space-x-4">
-                    <!-- Social Icons can be added here -->
-                </div>
-            </div>
+    <!-- Footer -->
+    <footer class="mt-16 py-8 bg-white border-t border-gray-200">
+        <div class="container mx-auto text-center text-gray-500 text-sm">
+            <p>&copy; {% now "Y" %} Maqsaddosh. Barcha huquqlar himoyalangan.</p>
         </div>
-        <div class="mt-12 border-t border-gray-800 pt-6 text-center text-gray-500">
-            <p>&copy; {% now "Y" %} ElevateHub. All Rights Reserved.</p>
-        </div>
-    </div>
-</footer>
+    </footer>
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {

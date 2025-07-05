@@ -48,7 +48,6 @@
             </a>
             {% endif %}
         </div>
-        
         <!-- Add Goal Button -->
         <a href="{% url 'goal_create' %}" class="bg-indigo-600 text-white font-semibold px-6 py-3 rounded-lg hover:bg-indigo-700 transition-all duration-300 transform hover:scale-105 shadow-lg shadow-indigo-500/30">
             + Maqsad Qo'shish
@@ -78,7 +77,7 @@
             <div class="border-t my-4"></div>
             <div class="flex justify-between items-center text-sm text-gray-600">
                 <span class="font-medium">{{ goal.subscribers.count }} obunachi</span>
-                <span class="font-medium">{{ goal.get_duration_display }}</span>
+                <span class="font-medium">{{ goal.duration }}</span>
             </div>
         </a>
         {% empty %}

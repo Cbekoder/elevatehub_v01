@@ -47,7 +47,7 @@ class HomeView(ListView):
                 top_streaks_map[streak.user_id] = streak
         
         context['top_streakers'] = sorted(top_streaks_map.values(), key=lambda x: x.streak_count, reverse=True)[:10]
-        
+        print("Top Streakers:", context['top_streakers'])
         # --- Personalized Data (for authenticated users only) ---
         if self.request.user.is_authenticated:
             user = self.request.user
@@ -255,7 +255,6 @@ class CategoryDetailView(ListView):
             queryset = queryset.filter(visibility='public')
             
         return queryset.order_by('-created_at')
-
     def get_context_data(self, **kwargs):
         """
         Adds the category object and the current filter to the context.
@@ -263,6 +262,7 @@ class CategoryDetailView(ListView):
         context = super().get_context_data(**kwargs)
         context['category'] = self.category
         context['active_filter'] = self.request.GET.get('visibility', 'public')
+        
         return context
 
 class SubTaskCreateView(LoginRequiredMixin, View):

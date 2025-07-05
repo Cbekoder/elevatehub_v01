@@ -149,7 +149,7 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
             const formData = new FormData(this);
             fetch("{% url 'subtask_create' goal.pk %}", {
-                method: 'POST', body: formData, headers: {'X-CSRFToken': '{{ csrf_token }}'}
+                method: 'POST', body: formData, headers: {'X-CSRFToken': '{{ csrf_token }}' }
             }).then(res => res.json()).then(data => {
                 if (data.status === 'ok') {
                     const li = document.createElement('li');

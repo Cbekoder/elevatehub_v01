@@ -1,4 +1,3 @@
-
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.utils.text import slugify
@@ -86,21 +85,51 @@ class SubCategory(models.Model):
 
 
 class Goal(models.Model):
-    VISIBILITY_CHOICES = [('public', 'Ommaviy'), ('private', 'Shaxsiy')]
-    DURATION_CHOICES = [(7, '7 kun'), (14, '14 kun'), (21, '21 kun'), (28, '28 kun')]
+    VISIBILITY_CHOICES = [("public", "Ommaviy"), ("private", "Shaxsiy")]
+    DURATION_CHOICES = [(7, "7 kun"), (14, "14 kun"), (21, "21 kun"), (28, "28 kun")]
     title = models.CharField(max_length=200, verbose_name="Maqsad Nomi")
     description = models.TextField(verbose_name="Izoh")
-    category = models.ForeignKey(GoalCategory, on_delete=models.SET_NULL, null=True, related_name='goals', verbose_name="Yo'nalishi")
-    sub_category = models.ForeignKey(SubCategory, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Ichki Yo'nalish")
+    category = models.ForeignKey(
+        GoalCategory,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="goals",
+        verbose_name="Yo'nalishi",
+    )
+    sub_category = models.ForeignKey(
+        SubCategory,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name="Ichki Yo'nalish",
+    )
     duration = models.IntegerField(choices=DURATION_CHOICES, verbose_name="Davomiyligi")
-    visibility = models.CharField(max_length=10, choices=VISIBILITY_CHOICES, default='public', verbose_name="Ko'rinishi")
-    phone_number = models.CharField(max_length=20, blank=True, verbose_name="Telefon Raqam")
-    telegram_username = models.CharField(max_length=100, blank=True, verbose_name="Telegram User")
-    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='created_goals')
+    visibility = models.CharField(
+        max_length=10,
+        choices=VISIBILITY_CHOICES,
+        default="public",
+        verbose_name="Ko'rinishi",
+    )
+    phone_number = models.CharField(
+        max_length=20, blank=True, verbose_name="Telefon Raqam"
+    )
+    telegram_username = models.CharField(
+        max_length=100, blank=True, verbose_name="Telegram User"
+    )
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="created_goals"
+    )
     created_at = models.DateTimeField(auto_now_add=True)
-    subscribers = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='subscribed_goals', blank=True)
-    def get_absolute_url(self): return reverse('goal_detail', kwargs={'pk': self.pk})
-    def __str__(self): return self.title
+    subscribers = models.ManyToManyField(
+        settings.AUTH_USER_MODEL, related_name="subscribed_goals", blank=True
+    )
+
+    def get_absolute_url(self):
+        return reverse("goal_detail", kwargs={"pk": self.pk})
+
+    def __str__(self):
+        return self.title
+
     @property
     def progress_percentage(self):
         """
@@ -112,53 +141,61 @@ class Goal(models.Model):
         completed_count = subtasks.filter(is_completed=True).count()
         return int((completed_count / subtasks.count()) * 100)
 
+
 class SubTask(models.Model):
     """
     Katta maqsad uchun kichik vazifani ifodalaydi.
     """
-    goal = models.ForeignKey(Goal, on_delete=models.CASCADE, related_name='subtasks')
+
+    goal = models.ForeignKey(Goal, on_delete=models.CASCADE, related_name="subtasks")
     title = models.CharField(max_length=255, verbose_name="Vazifa nomi")
     is_completed = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        ordering = ['created_at']
+        ordering = ["created_at"]
 
     def __str__(self):
         return self.title
+
 
 class GoalStreak(models.Model):
     """
     Tracks a user's daily check-in streak for a specific goal.
     """
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='streaks')
-    goal = models.ForeignKey(Goal, on_delete=models.CASCADE, related_name='streaks')
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="streaks"
+    )
+    goal = models.ForeignKey(Goal, on_delete=models.CASCADE, related_name="streaks")
     date = models.DateField(default=timezone.now)
     streak_count = models.IntegerField(default=1)
 
     class Meta:
         # Ensures a user can only check in once per day for a specific goal
-        unique_together = ('user', 'goal', 'date')
-        ordering = ['-date']
+        unique_together = ("user", "goal", "date")
+        ordering = ["-date"]
 
     def __str__(self):
         return f"{self.user.username}'s streak for '{self.goal.title}' on {self.date}"
+
 
 class GoalMessage(models.Model):
     """
     Represents a single message within a goal's chat room.
     """
-    goal = models.ForeignKey('Goal', on_delete=models.CASCADE, related_name='chat_messages')
+
+    goal = models.ForeignKey(
+        "Goal", on_delete=models.CASCADE, related_name="chat_messages"
+    )
     user = models.ForeignKey(
-        settings.AUTH_USER_MODEL, 
-        on_delete=models.CASCADE, 
-        related_name='chat_messages'
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="chat_messages"
     )
     message = models.TextField()
     timestamp = models.DateTimeField(default=timezone.now)
 
     class Meta:
-        ordering = ['timestamp']
+        ordering = ["timestamp"]
 
     def __str__(self):
-        return f'Message by {self.user.username} on {self.goal.title}'
+        return f"Message by {self.user.username} on {self.goal.title}"

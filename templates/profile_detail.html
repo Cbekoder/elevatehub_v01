@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+{% load profile_tags %} {# Make sure your custom templatetag is loaded #}
+
+{% block title %}Mening Profilim{% endblock %}
+
+{% block content %}
+<style>
+    #xp-progress-bar { transition: width 0.5s ease-in-out; }
+    .achievement-card { transition: all 0.3s ease; }
+    .achievement-card.unlocked:hover { transform: translateY(-5px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+    .achievement-card.locked { filter: grayscale(90%); opacity: 0.5; border-style: dashed; }
+    .my-goal-item:hover { background-color: #f9fafb; transform: translateX(4px); transition: all 0.2s ease-in-out; }
+</style>
+
+<div class="container mx-auto py-12 px-4">
+    <!-- Profile Header Card -->
+    <div class="bg-white p-8 rounded-2xl shadow-lg mb-8 flex flex-col sm:flex-row items-center">
+        <img class="w-28 h-28 rounded-full mr-0 sm:mr-8 mb-4 sm:mb-0 ring-4 ring-indigo-200 p-1" src="https://i.pravatar.cc/150?u={{ profile_user.username }}" alt="{{ profile_user.username }}">
+        <div class="flex-grow text-center sm:text-left">
+            <h1 class="text-4xl font-extrabold text-gray-900">{{ profile_user.first_name|default:profile_user.username }}</h1>
+            <p class="text-gray-500 mt-1">Platformaga a'zo bo'lgan sana: {{ profile_user.date_joined|date:"d M, Y" }}</p>
+            
+            <!-- Gamification Stats -->
+            <div class="flex items-center justify-center sm:justify-start space-x-6 mt-4">
+                <div class="text-center">
+                    <div class="text-2xl font-bold text-indigo-600">{{ profile_user.profile.level }}</div>
+                    <div class="text-sm text-gray-500 font-medium">Daraja</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-2xl font-bold text-amber-600">{{ profile_user.profile.coins }}</div>
+                    <div class="text-sm text-gray-500 font-medium">Tangalar</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-2xl font-bold text-purple-600">{{ profile_user.profile.xp }}</div>
+                    <div class="text-sm text-gray-500 font-medium">XP</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- XP Progress and Goals Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+        <!-- Left Column: XP and Achievements -->
+        <div class="lg:col-span-1 space-y-8">
+            <!-- XP Progress Card -->
+            <div class="bg-white p-6 rounded-2xl shadow-lg">
+                <h2 class="text-xl font-bold text-gray-800 mb-4">Keyingi darajaga o'tish</h2>
+                <div class="flex justify-between items-center mb-1 text-sm font-medium">
+                    <span class="text-gray-600">{{ profile_user.profile.xp }} XP</span>
+                    <span class="text-gray-400">{{ profile_user.profile.level_up_xp_threshold }} XP</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-4">
+                    <div id="xp-progress-bar" class="bg-gradient-to-r from-indigo-500 to-purple-600 h-4 rounded-full" style="width: {% widthratio profile_user.profile.xp profile_user.profile.level_up_xp_threshold 100 %}%"></div>
+                </div>
+            </div>
+
+            <!-- My Active Goals Card -->
+            <div class="bg-white rounded-2xl shadow-lg p-6">
+                <h2 class="text-xl font-bold text-gray-900 mb-4">Mening Faol Maqsadlarim</h2>
+                <ul class="space-y-2">
+                    {% for goal in my_active_goals %}
+                    <li class="my-goal-item p-3 rounded-lg">
+                        <a href="{{ goal.get_absolute_url }}" class="flex items-center">
+                            <div class="w-10 h-10 rounded-lg flex items-center justify-center mr-4" style="background-color: {{ goal.category.color|default:'#f0f4f8' }};">
+                                <svg class="w-6 h-6 text-gray-700" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09Z"></path></svg>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-gray-800">{{ goal.title }}</h4>
+                                <p class="text-xs text-gray-500">{{ goal.category.name }}</p>
+                            </div>
+                        </a>
+                    </li>
+                    {% empty %}
+                    <div class="text-center py-6">
+                        <p class="text-gray-500 text-sm">Sizda faol maqsadlar yo'q.</p>
+                        <a href="{% url 'home' %}" class="mt-3 inline-block text-sm font-semibold text-indigo-600 hover:text-indigo-500">Kategoriyalarni ko'rish</a>
+                    </div>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        <!-- Right Column: Achievements Gallery -->
+        <div class="lg:col-span-2 bg-white p-6 rounded-2xl shadow-lg">
+            <h2 class="text-xl font-bold text-gray-800 mb-6">Mening Yutuqlarim</h2>
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
+                {% for ach in all_achievements %}
+                    {% with user_ach=user_achievements|get_item:ach.slug %}
+                    <div class="achievement-card text-center p-4 border rounded-xl {% if user_ach %}unlocked bg-amber-50 border-amber-200{% else %}locked bg-gray-50 border-gray-200{% endif %}" title="{% if not user_ach %}{{ ach.description }}{% else %}Siz bu yutuqqa {{ user_ach.earned_at|date:'d M, Y' }} da erishgansiz.{% endif %}">
+                        <div class="text-4xl mb-2">{% if user_ach %}🏆{% else %}❓{% endif %}</div>
+                        <h3 class="font-bold text-sm {% if user_ach %}text-amber-800{% else %}text-gray-700{% endif %}">{{ ach.title }}</h3>
+                        <p class="text-xs {% if user_ach %}text-amber-600{% else %}text-gray-500{% endif %}">
+                            {% if user_ach %}
+                                Qo'lga kiritilgan
+                            {% else %}
+                                Mavjud
+                            {% endif %}
+                        </p>
+                    </div>
+                    {% endwith %}
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

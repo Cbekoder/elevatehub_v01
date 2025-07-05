@@ -41,6 +41,44 @@ class CustomUser(AbstractUser):
         # You can add other meta options here, like ordering
         # ordering = ['username']
 
+class Profile(models.Model):
+    """
+    Har bir foydalanuvchi uchun geymifikatsiya ma'lumotlarini saqlaydi.
+    """
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='profile')
+    xp = models.IntegerField(default=0, verbose_name="Tajriba ballari (XP)")
+    level = models.IntegerField(default=1, verbose_name="Daraja")
+    coins = models.IntegerField(default=0, verbose_name="Tangalar")
+
+    def __str__(self):
+        return f"{self.user.username} profili"
+    
+    def level_up_xp_threshold(self):
+        """ Keyingi darajaga o'tish uchun kerak bo'ladigan XP miqdori """
+        return self.level * 100
+
+# --- Achievement (Yutuq) Tizimi ---
+class Achievement(models.Model):
+    """ Barcha mumkin bo'lgan yutuqlarni belgilaydi """
+    slug = models.SlugField(unique=True) # masalan, 'first_goal' yoki '10_day_streak'
+    title = models.CharField(max_length=100)
+    description = models.TextField()
+    icon = models.CharField(max_length=100, help_text="Masalan, Heroicons nomini kiriting")
+    xp_reward = models.IntegerField(default=50)
+    coin_reward = models.IntegerField(default=10)
+
+    def __str__(self):
+        return self.title
+
+class UserAchievement(models.Model):
+    """ Foydalanuvchi qaysi yutuqqa qachon erishganini bog'laydi """
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    achievement = models.ForeignKey(Achievement, on_delete=models.CASCADE)
+    earned_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'achievement') # Bir yutuqni faqat bir marta olish mumkin
+
 
 class GoalCategory(models.Model):
     name = models.CharField(max_length=100, unique=True, verbose_name="Nomi")

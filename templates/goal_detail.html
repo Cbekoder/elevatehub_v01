@@ -114,11 +114,13 @@
                 <div class="grid grid-cols-7 gap-2 text-center mb-6">
                     {% for day in week_days %}<div class="streak-day p-2 rounded-full {% if day.is_active %}active{% endif %}"><div class="text-xs font-bold">{{ day.name }}</div><div class="text-lg font-bold">{{ day.date }}</div></div>{% empty %}<p class="col-span-7 text-center text-sm text-gray-500 py-4">Belgilanishni boshlang!</p>{% endfor %}
                 </div>
+                {% if user in subscribers%}
                 <form action="{% url 'goal_checkin' goal.id %}" method="post">
                     {% csrf_token %}
                     {% if has_checked_in_today %}<button disabled class="w-full bg-green-500 text-white font-bold py-3 rounded-lg flex items-center justify-center cursor-not-allowed shadow-lg shadow-green-500/30"><svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>Bugun belgilandingiz!</button>
                     {% else %}<button type="submit" class="w-full bg-indigo-600 text-white font-bold py-3 rounded-lg hover:bg-indigo-700 transition-transform hover:scale-105 shadow-lg shadow-indigo-500/40">Bugun uchun belgilanish</button>{% endif %}
                 </form>
+                {% endif %}
             </div>
 
             <div class="card bg-white rounded-2xl shadow-lg h-[calc(100vh-32rem)] flex flex-col">

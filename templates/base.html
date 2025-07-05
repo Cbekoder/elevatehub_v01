@@ -1,151 +1,163 @@
+{% load static %}
 <!DOCTYPE html>
-<html lang="uz" class="scroll-smooth">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Maqsaddosh!{% endblock %}</title>
-
-    <!-- Tailwind CSS CDN -->
+    <title>{% block title %}ElevateHub{% endblock %}</title>
+    
+    <!-- This assumes you are using the Tailwind CDN or have it set up via django-tailwind -->
     <script src="https://cdn.tailwindcss.com"></script>
-
-    <!-- Google Fonts: Inter -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-
+    
     <style>
-        /* Apply the Inter font to the body */
-        body {
-            font-family: 'Inter', sans-serif;
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-        }
-        /* Simple transition for dropdowns */
-        .dropdown-menu {
-            display: none;
-            opacity: 0;
-            transition: opacity 0.2s ease-out, transform 0.2s ease-out;
-            transform: translateY(10px);
-        }
-        .dropdown-menu.active {
-            display: block;
-            opacity: 1;
-            transform: translateY(0);
-        }
+        body { background-color: #f7f8fc; }
+        .dropdown-menu { display: none; }
+        .dropdown-menu.active { display: block; }
     </style>
 </head>
-<body class="bg-white">
+<body class="font-sans">
 
-    <!-- Header -->
-    <header class="bg-white/95 backdrop-blur-sm sticky top-0 z-40">
-        <div class="container mx-auto px-4">
-            <div class="flex justify-between items-center py-4 border-b border-gray-200">
-                <!-- Logo and Nav Links -->
-                <div class="flex items-center space-x-8">
-                    <a href="{% url 'home' %}" class="flex items-center text-xl font-bold text-gray-800">
-                        <!-- Asterisk Logo SVG -->
-                        <svg class="w-7 h-7 mr-2 text-black" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M10 1.5a.75.75 0 01.692.461l1.734 3.51a.75.75 0 00.565.41l3.868.562a.75.75 0 01.416 1.28l-2.8 2.73a.75.75 0 00-.216.664l.662 3.853a.75.75 0 01-1.088.79l-3.46-1.819a.75.75 0 00-.698 0l-3.46 1.819a.75.75 0 01-1.088-.79l.662-3.853a.75.75 0 00-.216-.664l-2.8-2.73a.75.75 0 01.416-1.28l3.868-.562a.75.75 0 00.565-.41L9.308 1.96A.75.75 0 0110 1.5z" />
-                        </svg>
-                    </a>
-                    <!-- Primary Nav -->
-                    <div class="hidden md:flex items-center space-x-6">
-                        <a href="{% url 'home' %}" class="text-gray-900 font-medium hover:text-blue-600 transition-colors">ElevateHub</a>
-                        {% comment %} {% if user.is_authenticated %}
-                         <a href="{% url ''%}" class="text-gray-500 hover:text-blue-600 transition-colors">Mening Maqsadlarim</a>
-                        {% endif %} {% endcomment %}
-                        {% comment %}<a href="#" class="text-gray-500 hover:text-blue-600 transition-colors">Biz haqimizda</a>
-                        <a href="#" class="text-gray-500 hover:text-blue-600 transition-colors">Yordam</a> {% endcomment %}
+<header class="bg-white/95 backdrop-blur-sm sticky top-0 z-50 shadow-sm">
+    <nav class="container mx-auto px-6 py-3">
+        <div class="flex justify-between items-center">
+            <!-- Logo -->
+            <a href="{% url 'home' %}" class="flex items-center space-x-2 text-2xl font-bold text-gray-800">
+                <svg class="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg>
+                <span>ElevateHub</span>
+            </a>
+
+            <!-- Primary Navigation -->
+            <div class="hidden md:flex items-center space-x-8">
+                <a href="{% url 'home' %}" class="text-gray-600 hover:text-indigo-600 transition-colors duration-300">Home</a>
+                <a href="#" class="text-gray-600 hover:text-indigo-600 transition-colors duration-300">Features</a>
+                <a href="#" class="text-gray-600 hover:text-indigo-600 transition-colors duration-300">Community</a>
+            </div>
+
+            <!-- User Actions & Gamification -->
+            <div class="flex items-center space-x-4">
+                {% if user.is_authenticated %}
+                    <!-- Gamification Stats -->
+                    <div class="hidden sm:flex items-center space-x-4 border-r pr-4 mr-2">
+                        <div class="flex items-center" title="Daraja">
+                            <svg class="w-5 h-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.57-.598-3.75h-.152c-3.196 0-6.1-1.248-8.25-3.286zm0 13.036h.008v.008h-.008v-.008z"></path></svg>
+                            <span class="ml-1 font-bold text-gray-700">{{ user.profile.level }}</span>
+                        </div>
+                        <div class="flex items-center" title="Tangalar">
+                            <svg class="w-5 h-5 text-amber-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.414-1.415L11 9.586V6z" clip-rule="evenodd"></path></svg>
+                            <span class="ml-1 font-bold text-gray-700">{{ user.profile.coins }}</span>
+                        </div>
                     </div>
-                </div>
-
-                <!-- Right side buttons -->
-                <div class="flex items-center space-x-3">
-                    {% if user.is_authenticated %}
-                        <a href="{% url 'goal_create'%}" class="hidden sm:inline-block bg-gray-100 text-gray-800 font-medium px-4 py-2 rounded-lg hover:bg-gray-200 text-sm transition-colors">+ Maqsad qo‘shish</a>
-                        <!-- Profile Dropdown -->
-                        <div class="relative">
-                            <button id="profileDropdownBtn" class="flex items-center space-x-2 focus:outline-none">
-                                <span class="w-9 h-9 bg-gray-200 rounded-full flex items-center justify-center">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-gray-600">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
-                                    </svg>
-                                </span>
-                            </button>
-                            <div id="profileDropdownMenu" class="dropdown-menu origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 py-1 z-20">
-                                <div class="px-4 py-3 text-sm text-gray-700 border-b">
-                                    <p class="font-medium truncate">{{ user.username }}</p>
-                                </div>
-                                <a href="{% url 'logout' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Chiqish</a>
+                    
+                    <a href="{% url 'goal_create' %}" class="hidden sm:flex items-center space-x-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 shadow-sm transition-transform duration-300 hover:scale-105">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                        <span>Add Goal</span>
+                    </a>
+                    
+                    <!-- Profile Dropdown -->
+                    <div class="relative">
+                        <button id="profileDropdownBtn" class="flex items-center focus:outline-none">
+                            <span class="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center text-indigo-700 font-bold text-lg">
+                                {{ user.username|first|upper }}
+                            </span>
+                        </button>
+                        <div id="profileDropdownMenu" class="dropdown-menu origin-top-right absolute right-0 mt-2 w-56 rounded-xl shadow-2xl bg-white ring-1 ring-black ring-opacity-5 z-20">
+                            <div class="p-4 border-b border-gray-100">
+                                <p class="text-sm text-gray-500">Signed in as</p>
+                                <p class="font-semibold text-gray-800 truncate">{{ user.username }}</p>
+                            </div>
+                            <div class="py-2">
+                                <a href="{% url 'profile_detail' %}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-600">
+                                    <svg class="w-5 h-5 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                                    My Profile
+                                </a>
+                            </div>
+                            <div class="py-2 border-t border-gray-100">
+                                <a href="{% url 'logout' %}" class="flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50">
+                                   <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                                    Logout
+                                </a>
                             </div>
                         </div>
-                    {% else %}
-                        <a href="#" class="hidden sm:inline-block bg-gray-100 text-gray-800 font-medium px-4 py-2 rounded-lg hover:bg-gray-200 text-sm transition-colors">+ Maqsad qo‘shish</a>
-                        <a href="{% url 'login' %}" class="bg-blue-600 text-white font-medium px-5 py-2 rounded-lg hover:bg-blue-700 text-sm transition-colors">Kirish</a>
-                    {% endif %}
+                    </div>
+                {% else %}
+                    <a href="{% url 'login' %}" class="text-gray-600 font-medium hover:text-indigo-600 transition-colors duration-300">Log In</a>
+                    <a href="{% url 'register' %}" class="bg-indigo-600 text-white font-medium px-4 py-2 rounded-lg hover:bg-indigo-700 shadow-sm transition-transform duration-300 hover:scale-105">Sign Up</a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+</header>
+
+<main class="container mx-auto mt-8 px-6">
+    {% if messages %}
+        <div class="space-y-3 mb-8">
+            {% for message in messages %}
+                <div class="flex items-center p-4 rounded-lg shadow-md {% if message.tags == 'success' %}bg-green-50 border-l-4 border-green-400{% elif message.tags == 'error' %}bg-red-50 border-l-4 border-red-400{% else %}bg-blue-50 border-l-4 border-blue-400{% endif %}" role="alert">
+                    <div class="text-xl">
+                        {% if message.tags == 'success' %}✅{% elif message.tags == 'error' %}❌{% else %}ℹ️{% endif %}
+                    </div>
+                    <div class="ml-4">
+                        <p class="font-semibold {% if message.tags == 'success' %}text-green-800{% elif message.tags == 'error' %}text-red-800{% else %}text-blue-800{% endif %}">
+                            {{ message }}
+                        </p>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    {% block content %}
+    <!-- Child template content will be injected here -->
+    {% endblock %}
+</main>
+
+<footer class="mt-24 bg-gray-900 text-white">
+    <div class="container mx-auto px-6 py-12">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div class="col-span-1 md:col-span-2">
+                <h3 class="text-2xl font-bold mb-2">ElevateHub</h3>
+                <p class="text-gray-400 max-w-md">Turn your ambitions into achievements. Set your goals, track your progress, and elevate your life.</p>
+            </div>
+            <div>
+                <h4 class="font-semibold text-lg mb-4">Quick Links</h4>
+                <ul class="space-y-2">
+                    <li><a href="#" class="text-gray-400 hover:text-white transition-colors">About Us</a></li>
+                    <li><a href="#" class="text-gray-400 hover:text-white transition-colors">Contact</a></li>
+                    <li><a href="#" class="text-gray-400 hover:text-white transition-colors">FAQ</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="font-semibold text-lg mb-4">Follow Us</h4>
+                <div class="flex space-x-4">
+                    <!-- Social Icons can be added here -->
                 </div>
             </div>
         </div>
-    </header>
-
-    <!-- Main Content -->
-    <main class="container mx-auto mt-4 px-4">
-        <!-- Django Messages -->
-        {% if messages %}
-            <div class="my-4 space-y-2">
-                {% for message in messages %}
-                    <div class="p-3 rounded-md text-sm font-medium {% if message.tags == 'success' %}bg-green-100 text-green-800{% elif message.tags == 'error' %}bg-red-100 text-red-800{% else %}bg-blue-100 text-blue-800{% endif %}">
-                        {{ message }}
-                    </div>
-                {% endfor %}
-            </div>
-        {% endif %}
-        
-        {% block content %}
-        <!-- Child template content will be rendered here -->
-        {% endblock %}
-    </main>
-
-    <!-- Footer -->
-    <footer class="mt-16 py-8 bg-white border-t border-gray-200">
-        <div class="container mx-auto text-center text-gray-500 text-sm">
-            <p>&copy; {% now "Y" %} Maqsaddosh. Barcha huquqlar himoyalangan.</p>
+        <div class="mt-12 border-t border-gray-800 pt-6 text-center text-gray-500">
+            <p>&copy; {% now "Y" %} ElevateHub. All Rights Reserved.</p>
         </div>
-    </footer>
+    </div>
+</footer>
 
-    <!-- JavaScript for Dropdowns -->
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Profile Dropdown
-            const profileDropdownBtn = document.getElementById('profileDropdownBtn');
-            const profileDropdownMenu = document.getElementById('profileDropdownMenu');
-            if (profileDropdownBtn && profileDropdownMenu) {
-                profileDropdownBtn.addEventListener('click', (event) => {
-                    event.stopPropagation();
-                    profileDropdownMenu.classList.toggle('active');
-                });
-            }
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const profileDropdownBtn = document.getElementById('profileDropdownBtn');
+        const profileDropdownMenu = document.getElementById('profileDropdownMenu');
 
-            // "Barchasi" Dropdown
-            const optionsMenuBtn = document.getElementById('options-menu');
-            const optionsMenu = document.getElementById('options-menu-dropdown');
-            if (optionsMenuBtn && optionsMenu) {
-                optionsMenuBtn.addEventListener('click', (event) => {
-                    event.stopPropagation();
-                    optionsMenu.classList.toggle('active');
-                });
-            }
-            
-            // Close dropdowns if clicking outside
-            document.addEventListener('click', (event) => {
-                if (profileDropdownMenu && !profileDropdownMenu.contains(event.target) && !profileDropdownBtn.contains(event.target)) {
-                    profileDropdownMenu.classList.remove('active');
-                }
-                if (optionsMenu && !optionsMenu.contains(event.target) && !optionsMenuBtn.contains(event.target)) {
-                    optionsMenu.classList.remove('active');
-                }
+        if (profileDropdownBtn) {
+            profileDropdownBtn.addEventListener('click', function(event) {
+                event.stopPropagation();
+                profileDropdownMenu.classList.toggle('active');
             });
+        }
+        
+        window.addEventListener('click', function(event) {
+            if (profileDropdownMenu && !profileDropdownMenu.contains(event.target) && !profileDropdownBtn.contains(event.target)) {
+                profileDropdownMenu.classList.remove('active');
+            }
         });
-    </script>
+    });
+</script>
+
 </body>
 </html>

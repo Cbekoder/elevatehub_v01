@@ -7,6 +7,7 @@ from . import views
 
 urlpatterns = [
     # Home and Category URLs
+    path("profile/", views.ProfileDetailView.as_view(), name="profile_detail"),
     path("", views.HomeView.as_view(), name="home"),
     path("register/", views.RegisterView.as_view(), name="register"),
     path(
@@ -60,7 +61,14 @@ urlpatterns = [
         views.FetchMessagesView.as_view(),
         name="fetch_messages",
     ),
-
-     path('goal/<int:goal_pk>/subtask/new/', views.SubTaskCreateView.as_view(), name='subtask_create'),
-    path('subtask/<int:subtask_pk>/toggle/', views.SubTaskToggleView.as_view(), name='subtask_toggle'),
+    path(
+        "goal/<int:goal_pk>/subtask/new/",
+        views.SubTaskCreateView.as_view(),
+        name="subtask_create",
+    ),
+    path(
+        "subtask/<int:subtask_pk>/toggle/",
+        views.SubTaskToggleView.as_view(),
+        name="subtask_toggle",
+    ),
 ]

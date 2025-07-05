@@ -80,7 +80,7 @@ class HomeView(ListView):
         context["top_goals"] = (
             Goal.objects.filter(visibility="public")
             .annotate(num_subscribers=Count("subscribers"))
-            .order_by("-num_subscribers")[:10]
+            .order_by("-num_subscribers")[:5]
         )
 
         all_streaks = GoalStreak.objects.order_by("user", "-streak_count")
@@ -91,7 +91,7 @@ class HomeView(ListView):
 
         context["top_streakers"] = sorted(
             top_streaks_map.values(), key=lambda x: x.streak_count, reverse=True
-        )[:10]
+        )[:5]
         print("Top Streakers:", context["top_streakers"])
         # --- Personalized Data (for authenticated users only) ---
         if self.request.user.is_authenticated:
